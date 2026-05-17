@@ -78,6 +78,7 @@ export interface LocationEntity {
 export type NavView =
   | "upload"
   | "graph"
+  | "map"
   | "signals"
   | "timeline"
   | "sources";

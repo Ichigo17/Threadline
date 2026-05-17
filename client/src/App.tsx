@@ -4,6 +4,7 @@ import SignalInbox from "./components/SignalInbox";
 import ValidationWorkspace from "./components/ValidationWorkspace";
 import UploadQueue from "./components/UploadQueue";
 import CaseGraph from "./components/CaseGraph";
+import MapWorkspace from "./components/MapWorkspace";
 import TimelineView from "./components/TimelineView";
 import SourcesView from "./components/SourcesView";
 import { api } from "./api";
@@ -95,6 +96,16 @@ export default function App() {
         {activeView === "graph" && (
           <div className="flex-1 overflow-hidden">
             <CaseGraph
+              links={links}
+              documents={documents}
+              onSelectLink={handleSelectLink}
+            />
+          </div>
+        )}
+
+        {activeView === "map" && (
+          <div className="flex-1 overflow-hidden">
+            <MapWorkspace
               links={links}
               documents={documents}
               onSelectLink={handleSelectLink}

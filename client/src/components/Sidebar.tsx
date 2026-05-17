@@ -1,6 +1,7 @@
 import {
   Upload,
   Network,
+  MapPin,
   Radio,
   Clock,
   FileText,
@@ -18,6 +19,7 @@ interface SidebarProps {
 const NAV_ITEMS: { id: NavView; label: string; icon: React.ElementType }[] = [
   { id: "upload", label: "Upload Queue", icon: Upload },
   { id: "graph", label: "Case Graph", icon: Network },
+  { id: "map", label: "Map Workspace", icon: MapPin },
   { id: "signals", label: "Signal Inbox", icon: Radio },
   { id: "timeline", label: "Timeline", icon: Clock },
   { id: "sources", label: "Sources", icon: FileText },

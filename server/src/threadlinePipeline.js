@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { v4 as uuidv4 } from "uuid";
 import db from "./db.js";
+import { shouldUseMock, getMockExtraction, getMockCorrelation } from "./mockPipelineEngine.js";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "demo" });
 
@@ -42,19 +43,23 @@ export async function runPass1(documentId) {
   if (existing) return JSON.parse(existing.raw_extraction);
 
   let extraction;
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: PASS1_SYSTEM_PROMPT },
-        { role: "user", content: `Analyze this document:\n\nTitle: ${doc.title}\nSource Type: ${doc.source_type}\n\n${doc.raw_text}` },
-      ],
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-    });
-    extraction = JSON.parse(response.choices[0].message.content);
-  } catch {
-    extraction = generateFallbackExtraction(doc);
+  if (shouldUseMock()) {
+    extraction = getMockExtraction(documentId);
+  } else {
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: PASS1_SYSTEM_PROMPT },
+          { role: "user", content: `Analyze this document:\n\nTitle: ${doc.title}\nSource Type: ${doc.source_type}\n\n${doc.raw_text}` },
+        ],
+        temperature: 0.2,
+        response_format: { type: "json_object" },
+      });
+      extraction = JSON.parse(response.choices[0].message.content);
+    } catch {
+      extraction = getMockExtraction(documentId);
+    }
   }
 
   const featureId = uuidv4();
@@ -85,22 +90,26 @@ export async function runPass2(docIdA, docIdB) {
   const featB = db.prepare("SELECT * FROM extracted_features WHERE document_id = ?").get(docIdB);
 
   let correlation;
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: PASS2_SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: `Compare these two documents for correlations:\n\nDOCUMENT A:\nTitle: ${docA.title}\n${docA.raw_text}\n\nExtracted Features A:\n${featA ? featA.raw_extraction : "N/A"}\n\nDOCUMENT B:\nTitle: ${docB.title}\n${docB.raw_text}\n\nExtracted Features B:\n${featB ? featB.raw_extraction : "N/A"}`,
-        },
-      ],
-      temperature: 0.3,
-      response_format: { type: "json_object" },
-    });
-    correlation = JSON.parse(response.choices[0].message.content);
-  } catch {
-    correlation = generateFallbackCorrelation(docA, docB, featA, featB);
+  if (shouldUseMock()) {
+    correlation = getMockCorrelation(docIdA, docIdB);
+  } else {
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: PASS2_SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: `Compare these two documents for correlations:\n\nDOCUMENT A:\nTitle: ${docA.title}\n${docA.raw_text}\n\nExtracted Features A:\n${featA ? featA.raw_extraction : "N/A"}\n\nDOCUMENT B:\nTitle: ${docB.title}\n${docB.raw_text}\n\nExtracted Features B:\n${featB ? featB.raw_extraction : "N/A"}`,
+          },
+        ],
+        temperature: 0.3,
+        response_format: { type: "json_object" },
+      });
+      correlation = JSON.parse(response.choices[0].message.content);
+    } catch {
+      correlation = getMockCorrelation(docIdA, docIdB);
+    }
   }
 
   const linkId = uuidv4();

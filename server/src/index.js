@@ -7,6 +7,7 @@ import documentsRouter from "./routes/documents.js";
 import entitiesRouter from "./routes/entities.js";
 import linksRouter from "./routes/links.js";
 import analysisRouter from "./routes/analysis.js";
+import mapRouter from "./routes/map.js";
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use("/api/documents", documentsRouter);
 app.use("/api/entities", entitiesRouter);
 app.use("/api/links", linksRouter);
 app.use("/api/analysis", analysisRouter);
+app.use("/api/map", mapRouter);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", service: "threadline-server" });

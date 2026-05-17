@@ -50,6 +50,16 @@ export const api = {
         method: "PATCH",
       }),
   },
+  map: {
+    locations: () =>
+      request<{ document_id: string; name: string; lat: number; lng: number; timestamp: string | null; details: string | null }[]>(
+        "/api/map/locations"
+      ),
+    linkPaths: () =>
+      request<{ link_id: string; source_doc_a: string; source_doc_b: string; confidence: string; is_validated: boolean; from: { lat: number; lng: number }; to: { lat: number; lng: number }; from_locations: { name: string; lat: number; lng: number }[]; to_locations: { name: string; lat: number; lng: number }[] }[]>(
+        "/api/map/link-paths"
+      ),
+  },
   analysis: {
     extract: (documentId: string) =>
       request<import("./types").ExtractedFeatures>(
