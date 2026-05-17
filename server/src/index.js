@@ -28,7 +28,7 @@ app.get("/api/health", (req, res) => {
 initDatabase();
 console.log("Database initialized.");
 
-seedDemoData();
+await seedDemoData();
 console.log("Demo data seeded.");
 
 app.listen(PORT, () => {

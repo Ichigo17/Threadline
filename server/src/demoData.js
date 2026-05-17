@@ -128,7 +128,7 @@ NOTES FROM WATCH OFFICER:
   },
 ];
 
-export function seedDemoData() {
+export async function seedDemoData() {
   const existingCount = db.prepare("SELECT COUNT(*) as count FROM documents").get().count;
   if (existingCount > 0) return;
 
@@ -146,7 +146,7 @@ export function seedDemoData() {
 
   for (const doc of DEMO_DOCUMENTS) {
     try {
-      runPass1(doc.id);
+      await runPass1(doc.id);
     } catch {
       /* fallback extraction handles errors */
     }
@@ -156,7 +156,7 @@ export function seedDemoData() {
   for (let i = 0; i < docIds.length; i++) {
     for (let j = i + 1; j < docIds.length; j++) {
       try {
-        runPass2(docIds[i], docIds[j]);
+        await runPass2(docIds[i], docIds[j]);
       } catch {
         /* fallback correlation handles errors */
       }
