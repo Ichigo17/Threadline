@@ -1,4 +1,6 @@
-import { Clock, CheckCircle2, MapPin, User, Truck } from "lucide-react";
+import { useState } from "react";
+import { Clock, CheckCircle2, MapPin, User, Truck, FileDown, X, FileText, Code } from "lucide-react";
+import { api } from "../api";
 import type { IncidentLink, Document, MetaEntity } from "../types";
 
 interface TimelineViewProps {
@@ -8,6 +10,10 @@ interface TimelineViewProps {
 }
 
 export default function TimelineView({ links, documents, entities }: TimelineViewProps) {
+  const [exporting, setExporting] = useState(false);
+  const [previewContent, setPreviewContent] = useState<string | null>(null);
+  const [previewFormat, setPreviewFormat] = useState<"markdown" | "html">("html");
+
   const validatedLinks = links.filter((l) => l.is_investigator_validated);
   const sortedDocs = [...documents].sort(
     (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -40,17 +46,107 @@ export default function TimelineView({ links, documents, entities }: TimelineVie
     }
   }
 
+  async function handleExport(format: "markdown" | "html") {
+    setExporting(true);
+    try {
+      const content = await api.export.caseBrief(format);
+      setPreviewContent(content);
+      setPreviewFormat(format);
+    } catch (err) {
+      console.error("Export failed:", err);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  function handleDownload() {
+    if (!previewContent) return;
+    const ext = previewFormat === "html" ? "html" : "md";
+    const mime = previewFormat === "html" ? "text/html" : "text/markdown";
+    const blob = new Blob([previewContent], { type: `${mime};charset=utf-8` });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `threadline-case-brief.${ext}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-gray-800">
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-          <Clock className="w-5 h-5 text-cyan-400" />
-          Narrative Timeline
-        </h2>
-        <p className="text-xs text-gray-500 mt-1">
-          Verified events pinned to the chronological timeline &middot;{" "}
-          {validatedLinks.length} verified link(s)
-        </p>
+      {previewContent && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-6">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-cyan-400" />
+                <h3 className="text-sm font-semibold text-white">Intelligence Case Brief Preview</h3>
+                <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
+                  {previewFormat.toUpperCase()}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownload}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium transition-colors"
+                >
+                  <FileDown className="w-3.5 h-3.5" />
+                  Download
+                </button>
+                <button
+                  onClick={() => setPreviewContent(null)}
+                  className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-6">
+              {previewFormat === "html" ? (
+                <iframe
+                  srcDoc={previewContent}
+                  className="w-full h-full min-h-[60vh] rounded-lg border border-gray-800"
+                  title="Case Brief Preview"
+                />
+              ) : (
+                <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">
+                  {previewContent}
+                </pre>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Clock className="w-5 h-5 text-cyan-400" />
+            Narrative Timeline
+          </h2>
+          <p className="text-xs text-gray-500 mt-1">
+            Verified events pinned to the chronological timeline &middot;{" "}
+            {validatedLinks.length} verified link(s)
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleExport("html")}
+            disabled={exporting}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600/10 hover:bg-cyan-600/20 text-cyan-400 text-xs font-medium border border-cyan-500/20 transition-colors disabled:opacity-50"
+          >
+            <Code className="w-3.5 h-3.5" />
+            {exporting ? "Generating..." : "Export HTML"}
+          </button>
+          <button
+            onClick={() => handleExport("markdown")}
+            disabled={exporting}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600/10 hover:bg-cyan-600/20 text-cyan-400 text-xs font-medium border border-cyan-500/20 transition-colors disabled:opacity-50"
+          >
+            <FileDown className="w-3.5 h-3.5" />
+            {exporting ? "Generating..." : "Export Markdown"}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">

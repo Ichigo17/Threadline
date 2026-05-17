@@ -60,6 +60,15 @@ export const api = {
         "/api/map/link-paths"
       ),
   },
+  export: {
+    caseBrief: (format: "markdown" | "html" = "markdown") =>
+      fetch(`${API_BASE}/api/export/case-brief?format=${format}`).then((r) => {
+        if (!r.ok) throw new Error(r.statusText);
+        return r.text();
+      }),
+    caseBriefUrl: (format: "markdown" | "html" = "markdown") =>
+      `${API_BASE}/api/export/case-brief?format=${format}`,
+  },
   analysis: {
     extract: (documentId: string) =>
       request<import("./types").ExtractedFeatures>(
