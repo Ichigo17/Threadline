@@ -266,46 +266,58 @@ export default function MapWorkspace({
               const isSelected = selectedPathId === path.link_id;
               const color =
                 CONFIDENCE_COLORS[path.confidence] || CONFIDENCE_COLORS.Weak;
+              const positions: [number, number][] = [
+                [path.from.lat, path.from.lng],
+                [path.to.lat, path.to.lng],
+              ];
+              const handleClick = () => {
+                setSelectedPathId(path.link_id);
+                onSelectLink(path.link_id);
+              };
               return (
-                <Polyline
-                  key={path.link_id}
-                  positions={[
-                    [path.from.lat, path.from.lng],
-                    [path.to.lat, path.to.lng],
-                  ]}
-                  pathOptions={{
-                    color,
-                    weight: isSelected ? 4 : 2,
-                    opacity: isSelected ? 1 : 0.6,
-                    dashArray: path.is_validated ? undefined : "8 4",
-                  }}
-                  eventHandlers={{
-                    click: () => {
-                      setSelectedPathId(path.link_id);
-                      onSelectLink(path.link_id);
-                    },
-                  }}
-                >
-                  <Popup>
-                    <div className="text-xs min-w-[200px]">
-                      <div className="font-bold text-gray-900 mb-1">
-                        Link: {path.confidence}
-                      </div>
-                      <div className="text-gray-600">
-                        {docTitles.get(path.source_doc_a) || path.source_doc_a}
-                      </div>
-                      <div className="text-gray-400 text-center">&darr;</div>
-                      <div className="text-gray-600">
-                        {docTitles.get(path.source_doc_b) || path.source_doc_b}
-                      </div>
-                      {path.is_validated && (
-                        <div className="mt-1 text-green-600 font-medium">
-                          Validated
+                <span key={path.link_id}>
+                  <Polyline
+                    positions={positions}
+                    pathOptions={{
+                      color: "transparent",
+                      weight: 16,
+                      opacity: 0,
+                    }}
+                    eventHandlers={{ click: handleClick }}
+                  />
+                  <Polyline
+                    positions={positions}
+                    pathOptions={{
+                      color,
+                      weight: isSelected ? 4 : 2,
+                      opacity: isSelected ? 1 : 0.6,
+                      dashArray: path.is_validated ? undefined : "8 4",
+                    }}
+                    eventHandlers={{ click: handleClick }}
+                  >
+                    <Popup>
+                      <div className="text-xs min-w-[200px]">
+                        <div className="font-bold text-gray-900 mb-1">
+                          Link: {path.confidence}
                         </div>
-                      )}
-                    </div>
-                  </Popup>
-                </Polyline>
+                        <div className="text-gray-600">
+                          {docTitles.get(path.source_doc_a) ||
+                            path.source_doc_a}
+                        </div>
+                        <div className="text-gray-400 text-center">&darr;</div>
+                        <div className="text-gray-600">
+                          {docTitles.get(path.source_doc_b) ||
+                            path.source_doc_b}
+                        </div>
+                        {path.is_validated && (
+                          <div className="mt-1 text-green-600 font-medium">
+                            Validated
+                          </div>
+                        )}
+                      </div>
+                    </Popup>
+                  </Polyline>
+                </span>
               );
             })}
           </MapContainer>
