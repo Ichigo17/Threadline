@@ -81,4 +81,7 @@ export type NavView =
   | "map"
   | "signals"
   | "timeline"
-  | "sources";
+  | "sources"
+  | "readme";
+
+export type TourStep = "upload" | "graph" | "map" | "signals" | "timeline" | null;

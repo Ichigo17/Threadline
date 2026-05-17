@@ -7,8 +7,9 @@ import CaseGraph from "./components/CaseGraph";
 import MapWorkspace from "./components/MapWorkspace";
 import TimelineView from "./components/TimelineView";
 import SourcesView from "./components/SourcesView";
+import ReadMeView from "./components/ReadMeView";
 import { api } from "./api";
-import type { NavView, Document, IncidentLink, MetaEntity } from "./types";
+import type { NavView, Document, IncidentLink, MetaEntity, TourStep } from "./types";
 
 export default function App() {
   const [activeView, setActiveView] = useState<NavView>("signals");
@@ -17,6 +18,30 @@ export default function App() {
   const [entities, setEntities] = useState<MetaEntity[]>([]);
   const [selectedLinkId, setSelectedLinkId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tourStep, setTourStep] = useState<TourStep>(null);
+
+  const TOUR_SEQUENCE: TourStep[] = ["upload", "graph", "map", "signals", "timeline"];
+
+  function handleStartTour() {
+    setTourStep("upload");
+    setActiveView("upload");
+  }
+
+  function handleTourNext() {
+    if (!tourStep) return;
+    const idx = TOUR_SEQUENCE.indexOf(tourStep);
+    if (idx < TOUR_SEQUENCE.length - 1) {
+      const next = TOUR_SEQUENCE[idx + 1];
+      setTourStep(next);
+      if (next) setActiveView(next);
+    } else {
+      setTourStep(null);
+    }
+  }
+
+  function handleTourEnd() {
+    setTourStep(null);
+  }
 
   const fetchData = useCallback(async () => {
     try {
@@ -81,9 +106,15 @@ export default function App() {
     <div className="h-screen flex bg-gray-950">
       <Sidebar
         activeView={activeView}
-        onNavigate={setActiveView}
+        onNavigate={(view) => {
+          setActiveView(view);
+          if (tourStep && view === tourStep) handleTourNext();
+        }}
         linkCount={activeLinks.length}
         docCount={documents.length}
+        tourStep={tourStep}
+        onTourNext={handleTourNext}
+        onTourEnd={handleTourEnd}
       />
 
       <main className="flex-1 flex overflow-hidden">
@@ -165,6 +196,16 @@ export default function App() {
         {activeView === "sources" && (
           <div className="flex-1 overflow-hidden">
             <SourcesView documents={documents} entities={entities} />
+          </div>
+        )}
+
+        {activeView === "readme" && (
+          <div className="flex-1 overflow-hidden">
+            <ReadMeView
+              onStartTour={handleStartTour}
+              onNavigate={setActiveView}
+              tourActive={tourStep !== null}
+            />
           </div>
         )}
       </main>
